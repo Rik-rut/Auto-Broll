@@ -21,6 +21,7 @@ dependencies = [
     "pillow>=10.3",
     "mmgp==3.7.10",
     "optimum-quanto>=0.2.4",
+    "huggingface-hub>=0.24",
 ]
 
 [project.scripts]

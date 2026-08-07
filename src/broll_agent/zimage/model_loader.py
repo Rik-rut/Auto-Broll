@@ -20,10 +20,57 @@ from broll_agent.zimage.vae import AutoencoderKL
 
 logger = logging.getLogger(__name__)
 
+_HF_REPO_ID = "DeepBeepMeep/Z-Image"
+
 _TRANSFORMER_WEIGHTS_NAME = "ZImageTurbo_quanto_bf16_int8.safetensors"
 _TEXT_ENCODER_WEIGHTS_NAME = "qwen3_quanto_bf16_int8.safetensors"
 _VAE_WEIGHTS_NAME = "ZImageTurbo_VAE_bf16.safetensors"
 _VAE_CONFIG_NAME = "ZImageTurbo_VAE_bf16_config.json"
+
+_HF_FILES = [
+    (_TRANSFORMER_WEIGHTS_NAME, _TRANSFORMER_WEIGHTS_NAME),
+    (f"Qwen3/{_TEXT_ENCODER_WEIGHTS_NAME}", _TEXT_ENCODER_WEIGHTS_NAME),
+    (_VAE_WEIGHTS_NAME, _VAE_WEIGHTS_NAME),
+    (_VAE_CONFIG_NAME, _VAE_CONFIG_NAME),
+]
+
+
+def ensure_model_files(model_dir: Path) -> None:
+    """Download missing model files from HuggingFace if needed."""
+    from huggingface_hub import hf_hub_download
+
+    missing = []
+    for hf_path, local_name in _HF_FILES:
+        local_path = model_dir / local_name
+        if not local_path.exists():
+            missing.append((hf_path, local_name))
+
+    if not missing:
+        logger.info("all model files present in %s", model_dir)
+        return
+
+    logger.info(
+        "downloading %d missing model file(s) from %s (~10 GB total)",
+        len(missing),
+        _HF_REPO_ID,
+    )
+
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    for hf_path, local_name in missing:
+        local_path = model_dir / local_name
+        logger.info("downloading %s → %s", hf_path, local_path)
+        downloaded_path = hf_hub_download(
+            repo_id=_HF_REPO_ID,
+            filename=hf_path,
+            local_dir=str(model_dir),
+            local_dir_use_symlinks=False,
+        )
+        if Path(downloaded_path) != local_path:
+            Path(downloaded_path).rename(local_path)
+        logger.info("downloaded %s", local_name)
+
+    logger.info("all model files ready")
 
 
 def conv_state_dict(sd: dict) -> dict:
@@ -59,6 +106,8 @@ _FUSED_SPLIT_MAP = {
 
 def load_zimage_pipeline(cfg: Settings) -> ZImagePipeline:
     model_dir = Path(cfg.zimage_model_dir)
+
+    ensure_model_files(model_dir)
 
     logger.info("loading Z-Image Turbo via mmgp (model_dir=%s)", model_dir)
 
