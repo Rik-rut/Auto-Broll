@@ -29,6 +29,24 @@ You need:
    - If using Ollama, set `LLM_PROVIDER=ollama` and `LLM_BASE_URL=http://127.0.0.1:8080`
 5. Everything else has sensible defaults, leave them for now.
 
+## Model files (for local generation)
+
+If you want to generate images locally (`GENERATE_BROLL=true`), you need the
+pre-quantized Z-Image Turbo model files in the `z-image model/` directory:
+
+- `transformer/config.json` — transformer architecture config
+- `transformer/ZImageTurbo_quanto_bf16_int8.safetensors` — pre-quantized transformer (~6.4 GB)
+- `text_encoder/qwen3_quanto_bf16_int8.safetensors` — pre-quantized text encoder (~3.5 GB)
+- `tokenizer/` — Qwen2 tokenizer files
+- `vae/` — VAE model files
+- `scheduler/scheduler_config.json` — scheduler config
+
+These files use the mmgp int8 format (not the standard HuggingFace format).
+Total disk usage is ~10 GB (vs ~30 GB for the standard format).
+
+Contact the project maintainer for access to these model files, or check the
+Wan2GP project for the original quantized weights.
+
 ## Running it
 
 Put your videos (.mp4, .mov, .mkv) in the `input/` folder, then:
@@ -69,15 +87,16 @@ All in `.env`:
   720x1280. For horizontal use 1920x1080.
 - **The visual style:** `STYLE_PROMPT` is added to every generated image.
   Change it to match your channel's look.
-- **Slow or out of memory:** Set `ZIMAGE_ENABLE_CPU_OFFLOAD=true` if your GPU
-  has less than 8GB of VRAM. Set `ZIMAGE_DEVICE=cpu` to run without a GPU at
-  all (much slower but works).
+- **Slow or out of memory:** The mmgp library manages VRAM automatically. If you
+  run out of memory, try lowering `ZIMAGE_PERC_RESERVED_MEM_MAX` (e.g., 0.8) or
+  set `ZIMAGE_DEVICE=cpu` to run without a GPU (much slower but works).
 
 ## If something goes wrong
 
 - **"ffmpeg not found"** Install ffmpeg and make sure it is on your PATH.
-- **Generation is very slow or crashes with memory errors** Set
-  `ZIMAGE_ENABLE_CPU_OFFLOAD=true` or `ZIMAGE_DEVICE=cpu` in `.env`.
+- **Generation is very slow or crashes with memory errors** The mmgp library
+  manages VRAM automatically. Try lowering `ZIMAGE_PERC_RESERVED_MEM_MAX` to
+  0.8 in `.env`, or set `ZIMAGE_DEVICE=cpu` to run without a GPU.
 - **Download errors** Check your SearXNG address in `SEARXNG_BASE_URL` or set
   `DOWNLOAD_BROLL=false`.
 - **LLM errors about keys** Check `LLM_API_KEY` in `.env`.
