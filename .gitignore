@@ -4,8 +4,12 @@ z-image model/
 # Agent instructions — local only
 AGENTS.md
 
-# Future implementation notes — not for main branch
+# Implementation notes — local only
 WAN2GP_IMPLEMENTATION.md
+
+# Planning documents — local only
+docs/superpowers/
+.superpowers/
 
 # Python-generated files
 __pycache__/
