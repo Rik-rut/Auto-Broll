@@ -16,8 +16,9 @@ You need:
   (test it: open a terminal and type `ffmpeg -version`)
 - An **API key** for an LLM provider like Anthropic, OpenAI, or DeepSeek
   (or a local [Ollama](https://ollama.com) install)
-- Optional: an **NVIDIA GPU** if you want local image generation
-  (it works without one, just slower)
+- **NVIDIA GPU** recommended for local image generation (6GB+ VRAM minimum, 8GB+ recommended)
+  - Works on CPU but much slower
+  - Model files (~10 GB) auto-download on first run
 
 ## One-time setup
 
@@ -32,20 +33,20 @@ You need:
 ## Model files (for local generation)
 
 If you want to generate images locally (`GENERATE_BROLL=true`), you need the
-pre-quantized Z-Image Turbo model files in the `z-image model/` directory:
+pre-quantized Z-Image Turbo model files. The good news: **they auto-download on first run!**
 
-- `transformer/config.json` — transformer architecture config
+The system will automatically download these files (~10 GB total) from HuggingFace to `z-image model/`:
+
 - `transformer/ZImageTurbo_quanto_bf16_int8.safetensors` — pre-quantized transformer (~6.4 GB)
 - `text_encoder/qwen3_quanto_bf16_int8.safetensors` — pre-quantized text encoder (~3.5 GB)
-- `tokenizer/` — Qwen2 tokenizer files
-- `vae/` — VAE model files
+- `vae/ZImageTurbo_VAE_bf16.safetensors` — VAE model
 - `scheduler/scheduler_config.json` — scheduler config
+- `tokenizer/` — Qwen2 tokenizer files
 
 These files use the mmgp int8 format (not the standard HuggingFace format).
 Total disk usage is ~10 GB (vs ~30 GB for the standard format).
 
-Contact the project maintainer for access to these model files, or check the
-Wan2GP project for the original quantized weights.
+**First run will take time** due to downloading. Subsequent runs are fast.
 
 ## Running it
 
@@ -56,7 +57,7 @@ uv run broll-agent run
 ```
 
 It transcribes your video, finds broll moments, and generates images. Expect a
-few minutes for transcription plus about 2 minutes per generated image.
+few minutes for transcription plus about 1 minute per generated image.
 
 To process one video only: `uv run broll-agent run --video input/my_video.mp4`
 
@@ -87,23 +88,31 @@ All in `.env`:
   720x1280. For horizontal use 1920x1080.
 - **The visual style:** `STYLE_PROMPT` is added to every generated image.
   Change it to match your channel's look.
-- **Slow or out of memory:** The mmgp library manages VRAM automatically. If you
-  run out of memory, try lowering `ZIMAGE_PERC_RESERVED_MEM_MAX` (e.g., 0.8) or
-  set `ZIMAGE_DEVICE=cpu` to run without a GPU (much slower but works).
+- **VRAM management:** `ZIMAGE_MMGP_PROFILE` controls memory usage (1-5, default 5).
+  Lower numbers use more VRAM but are faster. If you run out of memory, keep it at 5.
+  If you have lots of VRAM (12GB+), try profile 1-3 for faster generation.
+- **Triton acceleration:** `ZIMAGE_QUANTO_INT8_KERNEL=true/false` enables custom
+  kernels for ~10% speedup. Requires Linux and compatible GPU. Falls back gracefully
+  if unavailable.
 
 ## If something goes wrong
 
 - **"ffmpeg not found"** Install ffmpeg and make sure it is on your PATH.
-- **Generation is very slow or crashes with memory errors** The mmgp library
-  manages VRAM automatically. Try lowering `ZIMAGE_PERC_RESERVED_MEM_MAX` to
-  0.8 in `.env`, or set `ZIMAGE_DEVICE=cpu` to run without a GPU.
+- **Model download fails** Check your internet connection. The first run downloads ~10 GB.
+  You can also manually download from HuggingFace: `DeepBeepMeep/Z-Image`
+- **Generation is very slow or crashes with memory errors** Try a different VRAM profile:
+  - `ZIMAGE_MMGP_PROFILE=5` (default, most compatible)
+  - `ZIMAGE_MMGP_PROFILE=1` (fastest, needs 12GB+ VRAM)
+  - Or set `ZIMAGE_DEVICE=cpu` to run without a GPU (much slower but works)
+- **Triton kernels not working** This is normal on Windows. The system falls back to
+  standard quantization. For Triton support, use Linux with a compatible GPU.
 - **Download errors** Check your SearXNG address in `SEARXNG_BASE_URL` or set
   `DOWNLOAD_BROLL=false`.
 - **LLM errors about keys** Check `LLM_API_KEY` in `.env`.
 - **It did nothing on re-run** That means everything is already done. Add
   `--force` to redo it.
-- **All generated images look the same** This was fixed in the latest version.
-  Each image now gets a different camera angle prompt for more variety.
+- **All generated images look the same** Each image gets different environmental
+  variations (lighting, weather, time of day, seasons) for visual diversity.
 
 ## A note on downloaded images
 
