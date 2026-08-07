@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     zimage_guidance_scale: float = 0.0
     zimage_seed: int | None = None
     zimage_quanto_int8_kernel: bool = True
-    zimage_mmgp_profile: int = 0
+    zimage_mmgp_profile: int = 5
     zimage_perc_reserved_mem_max: float = 0.9
     zimage_vram_safety_coefficient: float = 0.1
     zimage_attention_backend: str = "auto"
