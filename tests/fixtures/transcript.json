@@ -1,0 +1,32 @@
+{
+  "video_file": "how_to_train_a_puppy.mp4",
+  "language": "en",
+  "duration_seconds": 125.0,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 6.5,
+      "text": "Welcome back — today we're talking about the first two weeks with a new puppy."
+    },
+    {
+      "start": 6.5,
+      "end": 41.2,
+      "text": "The first thing to know is that puppies sleep a lot, and that's completely normal."
+    },
+    {
+      "start": 41.2,
+      "end": 47.8,
+      "text": "...and this is where he chewed straight through my shoe."
+    },
+    {
+      "start": 47.8,
+      "end": 60.0,
+      "text": "And that's exactly why crate training matters so much early on."
+    },
+    {
+      "start": 60.0,
+      "end": 125.0,
+      "text": "So grab your leash, and let's head to the park for the first training session."
+    }
+  ]
+}

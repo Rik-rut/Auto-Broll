@@ -1,0 +1,31 @@
+{
+  "query": "puppy chewing shoe",
+  "number_of_results": 4,
+  "results": [
+    {
+      "title": "Puppy chewing a leather shoe",
+      "url": "https://example.com/a",
+      "img_src": "https://cdn.example.com/a.jpg",
+      "thumbnail_src": "https://cdn.example.com/a_thumb.jpg",
+      "resolution": "1920 x 1080"
+    },
+    {
+      "title": "Dog with sneaker",
+      "url": "https://example.com/b",
+      "img_src": "https://cdn.example.com/b.png",
+      "thumbnail_src": "https://cdn.example.com/b_thumb.png",
+      "resolution": "800x600"
+    },
+    {
+      "title": "Result without an image source",
+      "url": "https://example.com/c"
+    },
+    {
+      "title": "Tiny thumbnail-only",
+      "url": "https://example.com/d",
+      "img_src": "https://cdn.example.com/d.jpg",
+      "thumbnail_src": "https://cdn.example.com/d_thumb.jpg",
+      "resolution": "320 x 240"
+    }
+  ]
+}

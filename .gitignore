@@ -1,0 +1,32 @@
+# Model weights — large binary files, do not commit
+z-image model/
+
+# Agent instructions — local only
+AGENTS.md
+
+# Future implementation notes — not for main branch
+WAN2GP_IMPLEMENTATION.md
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets / local config — never commit a real .env
+.env
+
+# Pipeline artifacts
+output/*
+!output/.gitkeep
+input/*
+!input/.gitkeep
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
