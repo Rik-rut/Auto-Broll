@@ -26,7 +26,9 @@ from diffusers.utils import logging, replace_example_docstring
 from diffusers.utils.torch_utils import randn_tensor
 from transformers import AutoTokenizer, PreTrainedModel
 
+from broll_agent.shared.attention import get_default_attention_mode, resolve_attention_mode
 from broll_agent.shared.text_encoder_cache import TextEncoderCache
+from mmgp import offload
 
 from .pipeline_output import ZImagePipelineOutput
 from .transformer import ZImageTransformer2DModel
@@ -418,6 +420,9 @@ class ZImagePipeline(DiffusionPipeline, FromSingleFileMixin):
             `return_dict` is True, otherwise a `tuple`. When returning a tuple, the first element is a list with the
             generated images.
         """
+        if "_attention" not in offload.shared_state:
+            offload.shared_state["_attention"] = get_default_attention_mode()
+
         height = height or 1024
         width = width or 1024
 
