@@ -18,11 +18,21 @@ logger = logging.getLogger(__name__)
 GENERATED_PREFIX = "generated_"
 
 PROMPT_VARIATIONS = [
-    "wide angle shot, full scene, establishing view",
-    "medium close-up, shallow depth of field, cinematic lighting",
-    "low angle shot, dramatic perspective, dynamic composition",
-    "over-the-shoulder shot, intimate point of view",
-    "high angle shot, bird's eye perspective",
+    "wide angle shot, golden hour lighting, warm tones",
+    "medium close-up, overcast sky, soft diffused light",
+    "low angle shot, dramatic sunset, orange and purple sky",
+    "high angle shot, misty morning, ethereal atmosphere",
+    "over-the-shoulder shot, blue hour twilight, cool tones",
+    "close-up shot, harsh midday sun, strong shadows",
+    "wide establishing shot, rainy weather, wet reflections",
+    "medium shot, autumn foliage, warm amber lighting",
+    "low angle shot, winter scene, crisp cold atmosphere",
+    "eye-level shot, spring morning, fresh vibrant colors",
+    "dutch angle, stormy sky, dramatic tension",
+    "tracking shot perspective, motion blur background, dynamic energy",
+    "static wide shot, foggy dawn, mysterious ambiance",
+    "medium shot, summer afternoon, bright cheerful lighting",
+    "close-up detail shot, candlelight glow, intimate warm atmosphere",
 ]
 
 
