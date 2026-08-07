@@ -1,8 +1,8 @@
 """BrollOpportunity -> generated_NN.png via local Z-Image Turbo.
 
 Z-Image Turbo is a Flux-derived distilled model that runs in 4 steps
-with guidance_scale=0.0. The transformer is quantized to int8 at load
-time via torchao for ~2-3x faster inference without extra disk overhead.
+with guidance_scale=0.0. Weights are pre-quantized to int8 via mmgp
+for fast inference with reduced disk and VRAM usage.
 """
 
 from __future__ import annotations
@@ -27,39 +27,11 @@ PROMPT_VARIATIONS = [
 
 
 def load_pipeline(cfg: Settings):
-    """Load Z-Image Turbo once per run with torchao int8 quantization."""
-    import torch
-    from diffusers import ZImagePipeline
-    from torchao.quantization import Int8WeightOnlyConfig, quantize_
-    from torchao.quantization.granularity import PerGroup
+    """Load Z-Image Turbo once per run via mmgp with pre-quantized int8 weights."""
+    from broll_agent.zimage.model_loader import load_zimage_pipeline
 
-    model_dir = Path(cfg.zimage_model_dir)
-
-    logger.info(
-        "loading Z-Image Turbo (model_dir=%s, device=%s, dtype=%s, offload=%s)",
-        model_dir,
-        cfg.zimage_device,
-        cfg.zimage_dtype,
-        cfg.zimage_enable_cpu_offload,
-    )
-
-    dtype = getattr(torch, cfg.zimage_dtype)
-
-    pipe = ZImagePipeline.from_pretrained(
-        str(model_dir),
-        torch_dtype=dtype,
-        local_files_only=True,
-    )
-
-    logger.info("quantizing transformer to int8 (torchao)")
-    quantize_(pipe.transformer, Int8WeightOnlyConfig(granularity=PerGroup(64)))
-
-    if cfg.zimage_enable_cpu_offload:
-        pipe.enable_sequential_cpu_offload()
-    else:
-        pipe.to(cfg.zimage_device)
-
-    return pipe
+    logger.info("loading Z-Image Turbo via mmgp (model_dir=%s)", cfg.zimage_model_dir)
+    return load_zimage_pipeline(cfg)
 
 
 def build_prompt(opportunity: BrollOpportunity, cfg: Settings, variation: str) -> str:

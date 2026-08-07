@@ -38,15 +38,18 @@ class Settings(BaseSettings):
     generate_broll: bool = True
     download_broll: bool = True
 
-    # Z-Image Turbo (local generation via quantized Flux-derived model)
+    # Z-Image Turbo (local generation via mmgp int8 pipeline)
     zimage_model_dir: Path = Path("./z-image model")
     zimage_device: str = "cuda"
-    zimage_dtype: str = "bfloat16"
     zimage_images_per_prompt: int = 3
     zimage_num_inference_steps: int = 4
     zimage_guidance_scale: float = 0.0
     zimage_seed: int | None = None
-    zimage_enable_cpu_offload: bool = False
+    zimage_quanto_int8_kernel: bool = True
+    zimage_mmgp_profile: int = 0
+    zimage_perc_reserved_mem_max: float = 0.9
+    zimage_vram_safety_coefficient: float = 0.1
+    zimage_attention_backend: str = "auto"
 
     # Image output — governs generation size and download filtering
     aspect_ratio: str = "9:16"
