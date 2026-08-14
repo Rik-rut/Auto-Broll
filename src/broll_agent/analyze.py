@@ -22,12 +22,13 @@ broll image would improve the video, and for each one write an image-generation 
 and a short search query.
 
 Rules:
+- If the content has no timestamps, set "timestamp_start" and "timestamp_end" to null.
 - Return ONLY a JSON array — no markdown fences, no commentary.
 - Each item must be an object with exactly these fields:
   "id": string, "001", "002", ... in order of occurrence,
   "slug": short kebab-case label of the broll idea,
-  "timestamp_start": float seconds,
-  "timestamp_end": float seconds (must be > timestamp_start),
+  "timestamp_start": float seconds or null,
+  "timestamp_end": float seconds or null (must be > timestamp_start when both present),
   "context_text": the narration lines this moment covers,
   "reasoning": one sentence on why a cutaway works here,
   "image_prompt": a fully self-contained visual description — subject, setting, action,
@@ -44,8 +45,8 @@ Rules:
 class _RawOpportunity(BaseModel):
     id: str | None = None
     slug: str | None = None
-    timestamp_start: float
-    timestamp_end: float
+    timestamp_start: float | None = None
+    timestamp_end: float | None = None
     context_text: str
     reasoning: str
     image_prompt: str
@@ -53,6 +54,8 @@ class _RawOpportunity(BaseModel):
 
 
 def format_transcript_for_llm(transcript: Transcript) -> str:
+    if not transcript.segments:
+        return transcript.article_text or ""
     return "\n".join(
         f"[{format_timestamp(seg.start)} - {format_timestamp(seg.end)}] {seg.text}"
         for seg in transcript.segments

@@ -87,3 +87,40 @@ def test_analyze_succeeds_without_retry(transcript, fake_llm_factory) -> None:
     opportunities = analyze_transcript(transcript, llm)
     assert llm.calls == 1
     assert len(opportunities) == 2
+
+
+NULL_TIMESTAMP_RESPONSE = """[
+  {
+    "id": "001",
+    "slug": "casino-floor-betting",
+    "timestamp_start": null,
+    "timestamp_end": null,
+    "context_text": "The casino floor is where the house always wins.",
+    "reasoning": "Concrete, visual subject with no time reference.",
+    "image_prompt": "a busy casino floor with roulette tables and slot machines",
+    "searxng_query": "casino floor roulette"
+  }
+]"""
+
+
+def test_parse_accepts_null_timestamps() -> None:
+    opportunities = parse_opportunities(NULL_TIMESTAMP_RESPONSE)
+    assert len(opportunities) == 1
+    assert opportunities[0].timestamp_start is None
+    assert opportunities[0].timestamp_end is None
+
+
+def test_analyze_article_transcript_passes_article_text(fake_llm_factory) -> None:
+    from broll_agent.models import Transcript
+
+    article = Transcript(
+        video_file="casino.txt",
+        duration_seconds=None,
+        segments=[],
+        article_text="The casino floor is where the house always wins.",
+    )
+    llm = fake_llm_factory([NULL_TIMESTAMP_RESPONSE])
+    opportunities = analyze_transcript(article, llm)
+    assert llm.calls == 1
+    assert llm.prompts[0][1] == "The casino floor is where the house always wins."
+    assert len(opportunities) == 1
