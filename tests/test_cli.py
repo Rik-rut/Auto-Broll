@@ -66,9 +66,17 @@ def test_run_plan_processes_transcript_input(
 def test_run_plan_skips_existing_plan(
     tmp_path: Path, input_dir_with_srt: Path, monkeypatch
 ) -> None:
+    instances: list[FakeLLM] = []
+
+    def factory(cfg):
+        llm = FakeLLM(cfg)
+        instances.append(llm)
+        return llm
+
     out = tmp_path / "output"
     cfg = Settings(_env_file=None, input_dir=input_dir_with_srt, output_dir=out)
-    monkeypatch.setattr(cli, "LLMClient", FakeLLM)
+    monkeypatch.setattr(cli, "LLMClient", factory)
     cli._run_plan(cfg, None, False)
     cli._run_plan(cfg, None, False)
     assert out.joinpath("casino", PLAN_FILENAME).exists()
+    assert sum(llm.calls for llm in instances) == 1
