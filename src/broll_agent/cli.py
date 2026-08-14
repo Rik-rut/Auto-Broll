@@ -14,6 +14,7 @@ import typer
 
 from broll_agent.analyze import analyze_transcript
 from broll_agent.config import Settings, load_settings
+from broll_agent.content import load_content
 from broll_agent.download_searxng import (
     DOWNLOADED_PREFIX,
     USER_AGENT,
@@ -22,15 +23,25 @@ from broll_agent.download_searxng import (
 from broll_agent.generate_lightning import (
     GENERATED_PREFIX,
     generate_images_for_opportunity,
-    init_variations,
     load_pipeline,
+    load_variations,
 )
 from broll_agent.llm_client import LLMClient
 from broll_agent.logging_setup import setup_logging
 from broll_agent.models import BrollPlan
 from broll_agent.planner import PLAN_FILENAME, load_plan, scene_folder_name, write_plan_and_script
-from broll_agent.transcribe import TRANSCRIPT_FILENAME, load_or_transcribe
-from broll_agent.video_utils import assign_video_slugs, count_files_with_prefix, find_videos
+from broll_agent.transcribe import (
+    TRANSCRIPT_FILENAME,
+    load_or_transcribe,
+    save_transcript,
+)
+from broll_agent.video_utils import (
+    VIDEO_EXTENSIONS,
+    assign_video_slugs,
+    count_files_with_prefix,
+    find_transcripts,
+    find_videos,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,15 +51,15 @@ app = typer.Typer(
 )
 
 
-def _select_videos(cfg: Settings, video: Path | None) -> list[Path]:
-    all_videos = find_videos(cfg.input_dir)
+def _select_inputs(cfg: Settings, video: Path | None) -> list[Path]:
+    all_inputs = sorted(find_videos(cfg.input_dir) + find_transcripts(cfg.input_dir))
     if video is None:
-        if not all_videos:
-            logger.error("no videos found in %s", cfg.input_dir)
+        if not all_inputs:
+            logger.error("no videos or transcripts found in %s", cfg.input_dir)
             raise typer.Exit(code=1)
-        return all_videos
+        return all_inputs
     target = Path(video).resolve()
-    matches = [path for path in all_videos if path.resolve() == target]
+    matches = [path for path in all_inputs if path.resolve() == target]
     if not matches:
         logger.error("%s not found in %s", video, cfg.input_dir)
         raise typer.Exit(code=1)
@@ -70,12 +81,34 @@ def _plan_video(video_path: Path, slug: str, cfg: Settings, llm: LLMClient, forc
     logger.info("planned %d broll opportunities for %s", len(opportunities), slug)
 
 
+def _plan_transcript(
+    path: Path, slug: str, cfg: Settings, llm: LLMClient, force: bool
+) -> None:
+    out_dir = cfg.output_dir / slug
+    transcript_path = out_dir / TRANSCRIPT_FILENAME
+    if transcript_path.exists() and not force:
+        logger.info("transcript.json exists for %s — skipped (use --force to redo)", slug)
+        return
+    transcript = load_content(path)
+    save_transcript(transcript, transcript_path)
+    opportunities = analyze_transcript(transcript, llm)
+    plan = BrollPlan(
+        video_file=path.name,
+        video_slug=slug,
+        analyzed_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        llm_model=cfg.llm_model,
+        broll_opportunities=opportunities,
+    )
+    write_plan_and_script(plan, transcript, out_dir)
+    logger.info("planned %d broll opportunities for %s", len(opportunities), slug)
+
+
 def _run_plan(cfg: Settings, video: Path | None, force: bool) -> None:
-    videos = _select_videos(cfg, video)
-    slugs = assign_video_slugs(find_videos(cfg.input_dir))
+    inputs = _select_inputs(cfg, video)
+    slugs = assign_video_slugs(inputs)
     llm: LLMClient | None = None
-    for video_path in videos:
-        slug = slugs[video_path]
+    for path in inputs:
+        slug = slugs[path]
         plan_path = cfg.output_dir / slug / PLAN_FILENAME
         if plan_path.exists() and not force:
             logger.info("plan exists for %s — skipped (use --force to redo)", slug)
@@ -83,9 +116,12 @@ def _run_plan(cfg: Settings, video: Path | None, force: bool) -> None:
         if llm is None:
             llm = LLMClient(cfg)
         try:
-            _plan_video(video_path, slug, cfg, llm, force)
+            if path.suffix.lower() in VIDEO_EXTENSIONS:
+                _plan_video(path, slug, cfg, llm, force)
+            else:
+                _plan_transcript(path, slug, cfg, llm, force)
         except Exception:
-            logger.exception("planning failed for %s", video_path.name)
+            logger.exception("planning failed for %s", path.name)
 
 
 def _scene_dir(cfg: Settings, plan: BrollPlan, opportunity_index: int) -> Path:
@@ -104,6 +140,7 @@ def _execute_plan(
     llm: LLMClient | None,
     http: httpx.Client | None = None,
     force: bool = False,
+    variations: list[str] | None = None,
 ) -> None:
     for opportunity in plan.broll_opportunities:
         scene_dir = cfg.output_dir / plan.video_slug / "scenes" / scene_folder_name(opportunity)
@@ -117,7 +154,9 @@ def _execute_plan(
                 scene_dir, GENERATED_PREFIX,                 cfg.zimage_images_per_prompt, force
             ):
                 try:
-                    paths = generate_images_for_opportunity(pipe, opportunity, cfg, scene_dir)
+                    paths = generate_images_for_opportunity(
+                        pipe, opportunity, cfg, scene_dir, variations or []
+                    )
                     logger.info("generated %d images for %s", len(paths), scene_dir.name)
                 except Exception:
                     logger.exception("generation failed for %s", scene_dir.name)
@@ -138,11 +177,12 @@ def _execute_plan(
 def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
     import httpx
 
-    videos = _select_videos(cfg, video)
-    slugs = assign_video_slugs(find_videos(cfg.input_dir))
+    variations = load_variations(cfg.variations_file) if cfg.generate_broll else []
+    inputs = _select_inputs(cfg, video)
+    slugs = assign_video_slugs(inputs)
     plans: list[BrollPlan] = []
-    for video_path in videos:
-        slug = slugs[video_path]
+    for path in inputs:
+        slug = slugs[path]
         plan_path = cfg.output_dir / slug / PLAN_FILENAME
         if not plan_path.exists():
             logger.warning("no plan for %s — run `broll-agent plan` first", slug)
@@ -165,7 +205,6 @@ def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
             for index in range(len(plan.broll_opportunities))
         )
         if needs_generate:
-            init_variations(cfg)
             pipe = load_pipeline(cfg)
         else:
             logger.info("all generated images already exist — skipping pipeline load")
@@ -179,7 +218,7 @@ def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
     try:
         for plan in plans:
             try:
-                _execute_plan(plan, cfg, pipe, llm, http, force)
+                _execute_plan(plan, cfg, pipe, llm, http, force, variations)
             except Exception:
                 logger.exception("execute failed for %s", plan.video_slug)
     finally:
@@ -188,7 +227,10 @@ def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
 
 
 VideoOption = Annotated[
-    Path | None, typer.Option("--video", help="Process a single video from input/.")
+    Path | None,
+    typer.Option(
+        "--video", help="Process a single input file (video or transcript) from input/."
+    ),
 ]
 
 
