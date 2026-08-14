@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".avi"}
+TRANSCRIPT_EXTENSIONS = {".json", ".srt", ".txt"}
 
 
 def slugify(text: str) -> str:
@@ -41,6 +42,17 @@ def find_videos(input_dir: Path) -> list[Path]:
         path
         for path in input_dir.iterdir()
         if path.is_file() and path.suffix.lower() in VIDEO_EXTENSIONS
+    )
+
+
+def find_transcripts(input_dir: Path) -> list[Path]:
+    """Top-level scan of input_dir for transcript files (not recursive)."""
+    if not input_dir.is_dir():
+        return []
+    return sorted(
+        path
+        for path in input_dir.iterdir()
+        if path.is_file() and path.suffix.lower() in TRANSCRIPT_EXTENSIONS
     )
 
 
