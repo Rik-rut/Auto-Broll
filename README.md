@@ -56,6 +56,13 @@ Put your videos (.mp4, .mov, .mkv) in the `input/` folder, then:
 uv run broll-agent run
 ```
 
+You can also drop a transcript file into `input/` instead of a video —
+`*.json`, `*.srt`, or `*.txt` (plain narration text). It will skip the
+transcription step entirely and go straight to planning. A `.json` can be a
+bare list of segments (`[{"start": 12.4, "end": 15.9, "text": "..."}]`), a
+wrapper with `segments` + `duration_seconds`, or a full `transcript.json` as
+written by this tool.
+
 It transcribes your video, finds broll moments, and generates images. Expect a
 few minutes for transcription plus about 1 minute per generated image.
 
@@ -88,6 +95,9 @@ All in `.env`:
   720x1280. For horizontal use 1920x1080.
 - **The visual style:** `STYLE_PROMPT` is added to every generated image.
   Change it to match your channel's look.
+- **How each b-roll image is shot:** `VARIATIONS_FILE` points at
+  `config/image_variations.json` — edit that file to change how each b-roll
+  image is shot (framing + camera + lighting) without touching code.
 - **VRAM management:** `ZIMAGE_MMGP_PROFILE` controls memory usage (1-5, default 5).
   Lower numbers use more VRAM but are faster. If you run out of memory, keep it at 5.
   If you have lots of VRAM (12GB+), try profile 1-3 for faster generation.
