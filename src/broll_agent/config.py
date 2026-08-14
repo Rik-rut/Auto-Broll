@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     zimage_perc_reserved_mem_max: float = 0.9
     zimage_vram_safety_coefficient: float = 0.1
     zimage_attention_backend: str = "auto"
-    prompt_variations: str | None = None
+    variations_file: Path = Path("./config/image_variations.json")
 
     # Image output — governs generation size and download filtering
     aspect_ratio: str = "9:16"
@@ -83,7 +83,6 @@ class Settings(BaseSettings):
         "whisper_language",
         "negative_prompt",
         "zimage_seed",
-        "prompt_variations",
         mode="before",
     )
     @classmethod
