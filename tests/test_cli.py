@@ -80,3 +80,19 @@ def test_run_plan_skips_existing_plan(
     cli._run_plan(cfg, None, False)
     assert out.joinpath("casino", PLAN_FILENAME).exists()
     assert sum(llm.calls for llm in instances) == 1
+
+
+def test_run_plan_completes_interrupted_transcript_job(
+    tmp_path: Path, input_dir_with_srt: Path, monkeypatch
+) -> None:
+    out = tmp_path / "output"
+    cfg = Settings(_env_file=None, input_dir=input_dir_with_srt, output_dir=out)
+    monkeypatch.setattr(cli, "LLMClient", FakeLLM)
+    stale_dir = out / "casino"
+    stale_dir.mkdir(parents=True)
+    (stale_dir / TRANSCRIPT_FILENAME).write_text(
+        '{"video_file": "casino.srt", "segments": [{"start": 0.0, "end": 3.0, "text": "stale"}]}',
+        encoding="utf-8",
+    )
+    cli._run_plan(cfg, None, False)
+    assert (out / "casino" / PLAN_FILENAME).exists()

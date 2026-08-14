@@ -86,9 +86,6 @@ def _plan_transcript(
 ) -> None:
     out_dir = cfg.output_dir / slug
     transcript_path = out_dir / TRANSCRIPT_FILENAME
-    if transcript_path.exists() and not force:
-        logger.info("transcript.json exists for %s — skipped (use --force to redo)", slug)
-        return
     transcript = load_content(path)
     save_transcript(transcript, transcript_path)
     opportunities = analyze_transcript(transcript, llm)

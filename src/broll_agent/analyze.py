@@ -57,7 +57,7 @@ def format_transcript_for_llm(transcript: Transcript) -> str:
     if not transcript.segments:
         return transcript.article_text or ""
     return "\n".join(
-        f"[{format_timestamp(seg.start)} - {format_timestamp(seg.end)}] {seg.text}"
+        f"[{format_timestamp(seg.start or 0.0)} - {format_timestamp(seg.end or 0.0)}] {seg.text}"
         for seg in transcript.segments
     )
 

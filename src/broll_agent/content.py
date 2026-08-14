@@ -65,7 +65,7 @@ def parse_srt(text: str) -> Transcript:
             continue
         start = _to_seconds(*match.group(1, 2, 3, 4))
         end = _to_seconds(*match.group(5, 6, 7, 8))
-        idx = lines.index(time_line)
+        idx = next(i for i, ln in enumerate(lines) if "-->" in ln)
         caption = " ".join(lines[idx + 1 :]).strip()
         if caption:
             segments.append(TranscriptSegment(start=start, end=end, text=caption))
