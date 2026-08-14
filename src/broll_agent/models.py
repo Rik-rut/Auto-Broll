@@ -6,23 +6,24 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class TranscriptSegment(BaseModel):
-    start: float
-    end: float
+    start: float | None = None
+    end: float | None = None
     text: str
 
 
 class Transcript(BaseModel):
     video_file: str
     language: str | None = None
-    duration_seconds: float
+    duration_seconds: float | None = None
     segments: list[TranscriptSegment] = Field(default_factory=list)
+    article_text: str | None = None
 
 
 class BrollOpportunity(BaseModel):
     id: str
     slug: str
-    timestamp_start: float
-    timestamp_end: float
+    timestamp_start: float | None = None
+    timestamp_end: float | None = None
     context_text: str
     reasoning: str
     image_prompt: str
