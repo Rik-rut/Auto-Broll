@@ -47,39 +47,74 @@ def load_plan(path: Path) -> BrollPlan:
 def render_script(plan: BrollPlan, transcript: Transcript) -> str:
     """Markdown script: full narration broken at each broll opportunity."""
     title = _title_case(plan.video_slug.replace("-", " "))
-    lines = [
-        f"# Broll Script — {title}",
-        f"Source: {plan.video_file} · Duration: {format_timestamp(transcript.duration_seconds)}",
-        "",
-    ]
-    opportunities = sorted(plan.broll_opportunities, key=lambda opp: opp.timestamp_start)
-    cursor = 0.0
-    for opp in opportunities:
-        block = [
-            seg
-            for seg in transcript.segments
-            if seg.start < opp.timestamp_start and seg.end > cursor
-        ]
-        if block:
-            lines.append(f"{format_timestamp(cursor)} – {format_timestamp(opp.timestamp_start)}")
-            lines.append(f'"{" ".join(seg.text for seg in block)}"')
+    lines = [f"# Broll Script — {title}"]
+    if transcript.duration_seconds is not None:
+        lines.append(
+            f"Source: {plan.video_file} · Duration: {format_timestamp(transcript.duration_seconds)}"
+        )
+    else:
+        lines.append(f"Source: {plan.video_file}")
+    lines.append("")
+
+    opportunities = sorted(
+        plan.broll_opportunities,
+        key=lambda opp: (opp.timestamp_start is None, opp.timestamp_start or 0.0),
+    )
+    has_timestamps = any(opp.timestamp_start is not None for opp in plan.broll_opportunities)
+
+    if has_timestamps and transcript.segments:
+        cursor = 0.0
+        for opp in opportunities:
+            if opp.timestamp_start is None:
+                _append_callout(lines, opp)
+                continue
+            block = [
+                seg
+                for seg in transcript.segments
+                if seg.start is not None
+                and seg.start < opp.timestamp_start
+                and (seg.end or seg.start) > cursor
+            ]
+            if block:
+                lines.append(
+                    f"{format_timestamp(cursor)} – {format_timestamp(opp.timestamp_start)}"
+                )
+                lines.append(f'"{" ".join(seg.text for seg in block)}"')
+                lines.append("")
+            _append_callout(lines, opp)
+            cursor = max(cursor, opp.timestamp_end or 0.0)
+        tail = [seg for seg in transcript.segments if (seg.end or 0.0) > cursor]
+        if tail:
+            lines.append(
+                f"{format_timestamp(cursor)} – "
+                f"{format_timestamp(transcript.duration_seconds or cursor)}"
+            )
+            lines.append(f'"{" ".join(seg.text for seg in tail)}"')
             lines.append("")
-        opp_title = opp.slug.replace("-", " ").title()
+    else:
+        if transcript.segments:
+            narration = " ".join(seg.text for seg in transcript.segments)
+        else:
+            narration = transcript.article_text or ""
+        if narration:
+            lines.append(f'"{narration}"')
+            lines.append("")
+        for opp in opportunities:
+            _append_callout(lines, opp)
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _append_callout(lines: list[str], opp: BrollOpportunity) -> None:
+    opp_title = opp.slug.replace("-", " ").title()
+    if opp.timestamp_start is not None and opp.timestamp_end is not None:
         start = format_timestamp(opp.timestamp_start)
         end = format_timestamp(opp.timestamp_end)
         lines.append(f"> 🎬 **[{start}–{end}] {opp_title}**")
-        lines.append(f"> {opp.reasoning}")
-        lines.append(f"> Images: `scenes/{scene_folder_name(opp)}/`")
-        lines.append("")
-        cursor = max(cursor, opp.timestamp_end)
-    tail = [seg for seg in transcript.segments if seg.end > cursor]
-    if tail:
-        lines.append(
-            f"{format_timestamp(cursor)} – {format_timestamp(transcript.duration_seconds)}"
-        )
-        lines.append(f'"{" ".join(seg.text for seg in tail)}"')
-        lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
+    else:
+        lines.append(f"> 🎬 **{opp_title}**")
+    lines.append(f"> {opp.reasoning}")
+    lines.append(f"> Images: `scenes/{scene_folder_name(opp)}/`")
+    lines.append("")
 
 
 def write_plan_and_script(

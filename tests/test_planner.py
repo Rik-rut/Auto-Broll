@@ -75,3 +75,45 @@ def test_render_script_handles_no_opportunities(transcript) -> None:
     script = render_script(plan, transcript)
     assert "🎬" not in script
     assert "Welcome back" in script
+
+
+def test_render_script_article_without_timestamps() -> None:
+    from broll_agent.models import Transcript
+
+    plan = BrollPlan(
+        video_file="casino.txt",
+        video_slug="casino-betting",
+        analyzed_at="2026-08-13T10:00:00Z",
+        llm_model="claude-sonnet-4-6",
+        broll_opportunities=[
+            BrollOpportunity(
+                id="001",
+                slug="casino-floor-betting",
+                timestamp_start=None,
+                timestamp_end=None,
+                context_text="The casino floor is where the house always wins.",
+                reasoning="Concrete, visual subject.",
+                image_prompt="a busy casino floor with roulette tables",
+                searxng_query="casino floor roulette",
+            )
+        ],
+    )
+    transcript = Transcript(
+        video_file="casino.txt",
+        duration_seconds=None,
+        segments=[],
+        article_text="The casino floor is where the house always wins.",
+    )
+    script = render_script(plan, transcript)
+    assert "# Broll Script — Casino Betting" in script
+    assert "Duration:" not in script
+    assert "00:00" not in script
+    assert "The casino floor is where the house always wins." in script
+    assert "🎬 **Casino Floor Betting**" in script
+    assert "Images: `scenes/001_casino-floor-betting/`" in script
+
+
+def test_render_script_timestamped_still_works(transcript) -> None:
+    script = render_script(_sample_plan(), transcript)
+    assert "Duration: 02:05" in script
+    assert "00:00 – 00:41" in script
