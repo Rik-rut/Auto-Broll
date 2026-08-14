@@ -7,6 +7,7 @@ for fast inference with reduced disk and VRAM usage.
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,38 +22,14 @@ logger = logging.getLogger(__name__)
 
 GENERATED_PREFIX = "generated_"
 
-_DEFAULT_VARIATIONS = [
-    "wide angle shot, golden hour lighting, warm tones",
-    "medium close-up, overcast sky, soft diffused light",
-    "low angle shot, dramatic sunset, orange and purple sky",
-    "high angle shot, misty morning, ethereal atmosphere",
-    "over-the-shoulder shot, blue hour twilight, cool tones",
-    "close-up shot, harsh midday sun, strong shadows",
-    "wide establishing shot, rainy weather, wet reflections",
-    "medium shot, autumn foliage, warm amber lighting",
-    "low angle shot, winter scene, crisp cold atmosphere",
-    "eye-level shot, spring morning, fresh vibrant colors",
-    "dutch angle, stormy sky, dramatic tension",
-    "tracking shot perspective, motion blur background, dynamic energy",
-    "static wide shot, foggy dawn, mysterious ambiance",
-    "medium shot, summer afternoon, bright cheerful lighting",
-    "close-up detail shot, candlelight glow, intimate warm atmosphere",
-]
 
-
-def _parse_variations(raw: str | None) -> list[str]:
-    if not raw or not raw.strip():
-        return _DEFAULT_VARIATIONS
-    return [v.strip() for v in raw.split(",") if v.strip()]
-
-
-PROMPT_VARIATIONS: list[str] = []
-
-
-def init_variations(cfg: Settings) -> None:
-    """Load prompt variations from config at pipeline startup."""
-    global PROMPT_VARIATIONS
-    PROMPT_VARIATIONS = _parse_variations(cfg.prompt_variations)
+def load_variations(path: Path) -> list[str]:
+    """Load prompt variations from a JSON data file ({'variations': [...]})."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    variations = data.get("variations") or []
+    if not variations:
+        raise ValueError(f"no variations configured in {path}")
+    return variations
 
 
 def load_pipeline(cfg: Settings) -> ZImagePipeline:
@@ -74,14 +51,17 @@ def build_prompt(opportunity: BrollOpportunity, cfg: Settings, variation: str) -
 
 
 def generate_images_for_opportunity(
-    pipe: object, opportunity: BrollOpportunity, cfg: Settings, dest_dir: Path
+    pipe: object,
+    opportunity: BrollOpportunity,
+    cfg: Settings,
+    dest_dir: Path,
+    variations: list[str],
 ) -> list[Path]:
     import torch
 
     dest_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     for index in range(cfg.zimage_images_per_prompt):
-        variations = PROMPT_VARIATIONS if PROMPT_VARIATIONS else _DEFAULT_VARIATIONS
         variation = variations[index % len(variations)]
         prompt = build_prompt(opportunity, cfg, variation)
         seed = (
