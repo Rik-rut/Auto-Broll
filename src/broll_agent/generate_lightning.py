@@ -9,15 +9,19 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from broll_agent.config import Settings
 from broll_agent.models import BrollOpportunity
+
+if TYPE_CHECKING:
+    from broll_agent.zimage.pipeline import ZImagePipeline
 
 logger = logging.getLogger(__name__)
 
 GENERATED_PREFIX = "generated_"
 
-PROMPT_VARIATIONS = [
+_DEFAULT_VARIATIONS = [
     "wide angle shot, golden hour lighting, warm tones",
     "medium close-up, overcast sky, soft diffused light",
     "low angle shot, dramatic sunset, orange and purple sky",
@@ -36,7 +40,22 @@ PROMPT_VARIATIONS = [
 ]
 
 
-def load_pipeline(cfg: Settings):
+def _parse_variations(raw: str | None) -> list[str]:
+    if not raw or not raw.strip():
+        return _DEFAULT_VARIATIONS
+    return [v.strip() for v in raw.split(",") if v.strip()]
+
+
+PROMPT_VARIATIONS: list[str] = []
+
+
+def init_variations(cfg: Settings) -> None:
+    """Load prompt variations from config at pipeline startup."""
+    global PROMPT_VARIATIONS
+    PROMPT_VARIATIONS = _parse_variations(cfg.prompt_variations)
+
+
+def load_pipeline(cfg: Settings) -> ZImagePipeline:
     """Load Z-Image Turbo once per run via mmgp with pre-quantized int8 weights."""
     from broll_agent.zimage.model_loader import load_zimage_pipeline
 
@@ -62,7 +81,8 @@ def generate_images_for_opportunity(
     dest_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
     for index in range(cfg.zimage_images_per_prompt):
-        variation = PROMPT_VARIATIONS[index % len(PROMPT_VARIATIONS)]
+        variations = PROMPT_VARIATIONS if PROMPT_VARIATIONS else _DEFAULT_VARIATIONS
+        variation = variations[index % len(variations)]
         prompt = build_prompt(opportunity, cfg, variation)
         seed = (
             cfg.zimage_seed

@@ -97,11 +97,20 @@ def search_images(
     return candidates
 
 
+def _is_valid_url(url: str) -> bool:
+    """Return True if the URL has a recognizable scheme and netloc."""
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme in ("http", "https") and parsed.netloc != ""
+    except Exception:
+        return False
+
+
 def _format_candidates_for_llm(candidates: Sequence[ImageCandidate]) -> str:
     lines = []
     for index, cand in enumerate(candidates, start=1):
         resolution = f"{cand.width}x{cand.height}" if cand.width and cand.height else "unknown size"
-        domain = urlparse(cand.img_src).netloc
+        domain = urlparse(cand.img_src).netloc if _is_valid_url(cand.img_src) else "<invalid>"
         title = cand.title[:80]
         lines.append(f"{index}. img_src={cand.img_src} | {resolution} | domain={domain} | {title}")
     return "\n".join(lines)

@@ -58,6 +58,8 @@ class LLMClient:
 
         start = time.perf_counter()
         response = litellm.completion(**kwargs)
-        text = response.choices[0].message.content or ""
+        text = response.choices[0].message.content
+        if not text:
+            raise LLMError(f"empty response from {self._litellm_model()}")
         logger.debug("llm completion ok (%.1fs, %d chars)", time.perf_counter() - start, len(text))
         return text

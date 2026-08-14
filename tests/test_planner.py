@@ -59,7 +59,7 @@ def test_write_plan_and_script_creates_both(tmp_path: Path, transcript) -> None:
 
 def test_render_script_contains_narration_and_callout(transcript) -> None:
     script = render_script(_sample_plan(), transcript)
-    assert "# Broll Script — How To Train A Puppy" in script
+    assert "# Broll Script — How to Train a Puppy" in script
     assert "Source: how_to_train_a_puppy.mp4 · Duration: 02:05" in script
     assert "00:00 – 00:41" in script
     assert "🎬 **[00:41–00:47] Puppy Chewing A Shoe**" in script

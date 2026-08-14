@@ -60,6 +60,7 @@ def probe_duration(video_path: Path) -> float:
         capture_output=True,
         text=True,
         check=True,
+        timeout=30,
     )
     return float(result.stdout.strip())
 

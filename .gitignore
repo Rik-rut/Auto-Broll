@@ -25,6 +25,7 @@ wheels/
 
 # Secrets / local config — never commit a real .env
 .env
+.env copy
 
 # Pipeline artifacts
 output/*

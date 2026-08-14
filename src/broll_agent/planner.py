@@ -14,6 +14,21 @@ logger = logging.getLogger(__name__)
 PLAN_FILENAME = "broll_plan.json"
 SCRIPT_FILENAME = "broll_script.md"
 
+_SMALL_WORDS = frozenset(
+    {"a", "an", "the", "and", "or", "but", "to", "of", "in", "on", "for", "with"}
+)
+
+
+def _title_case(text: str) -> str:
+    """Title-case that lowercases articles, prepositions, and conjunctions."""
+    words = text.split()
+    if not words:
+        return text
+    result = [words[0].capitalize()]
+    for w in words[1:]:
+        result.append(w.lower() if w.lower() in _SMALL_WORDS else w.capitalize())
+    return " ".join(result)
+
 
 def scene_folder_name(opportunity: BrollOpportunity) -> str:
     return f"{opportunity.id}_{opportunity.slug}"
@@ -31,7 +46,7 @@ def load_plan(path: Path) -> BrollPlan:
 
 def render_script(plan: BrollPlan, transcript: Transcript) -> str:
     """Markdown script: full narration broken at each broll opportunity."""
-    title = plan.video_slug.replace("-", " ").title()
+    title = _title_case(plan.video_slug.replace("-", " "))
     lines = [
         f"# Broll Script — {title}",
         f"Source: {plan.video_file} · Duration: {format_timestamp(transcript.duration_seconds)}",

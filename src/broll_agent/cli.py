@@ -5,9 +5,11 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
-import httpx
+if TYPE_CHECKING:
+    import httpx
+
 import typer
 
 from broll_agent.analyze import analyze_transcript
@@ -20,6 +22,7 @@ from broll_agent.download_searxng import (
 from broll_agent.generate_lightning import (
     GENERATED_PREFIX,
     generate_images_for_opportunity,
+    init_variations,
     load_pipeline,
 )
 from broll_agent.llm_client import LLMClient
@@ -99,8 +102,8 @@ def _execute_plan(
     cfg: Settings,
     pipe: object | None,
     llm: LLMClient | None,
-    http: httpx.Client | None,
-    force: bool,
+    http: httpx.Client | None = None,
+    force: bool = False,
 ) -> None:
     for opportunity in plan.broll_opportunities:
         scene_dir = cfg.output_dir / plan.video_slug / "scenes" / scene_folder_name(opportunity)
@@ -133,6 +136,8 @@ def _execute_plan(
 
 
 def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
+    import httpx
+
     videos = _select_videos(cfg, video)
     slugs = assign_video_slugs(find_videos(cfg.input_dir))
     plans: list[BrollPlan] = []
@@ -160,6 +165,7 @@ def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
             for index in range(len(plan.broll_opportunities))
         )
         if needs_generate:
+            init_variations(cfg)
             pipe = load_pipeline(cfg)
         else:
             logger.info("all generated images already exist — skipping pipeline load")

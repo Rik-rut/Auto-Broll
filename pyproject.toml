@@ -1,7 +1,7 @@
 [project]
 name = "auto-broll"
 version = "0.1.0"
-description = "CLI pipeline that watches narration videos and produces broll image suggestions via SDXL Lightning generation and SearXNG downloads."
+description = "CLI pipeline that watches narration videos and produces broll image suggestions via Z-Image Turbo generation and SearXNG downloads."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
