@@ -20,12 +20,14 @@ dist/
 wheels/
 *.egg-info
 
+
 # Virtual environments
 .venv
 
 # Secrets / local config — never commit a real .env
 .env
 .env copy
+graphify-out/
 
 # Pipeline artifacts
 output/*
