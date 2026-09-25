@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -38,6 +39,9 @@ class Settings(BaseSettings):
     generate_broll: bool = True
     download_broll: bool = True
 
+    # Local generation engine: z-image turbo or qwen-image 2.1 turbo
+    image_engine: Literal["zimage", "qwen_image21"] = "zimage"
+
     # Z-Image Turbo (local generation via mmgp int8 pipeline)
     zimage_model_dir: Path = Path("./z-image model")
     zimage_device: str = "cuda"
@@ -51,6 +55,19 @@ class Settings(BaseSettings):
     zimage_vram_safety_coefficient: float = 0.1
     zimage_attention_backend: str = "auto"
     variations_file: Path = Path("./config/image_variations.json")
+
+    # Qwen-Image 2.1 Turbo (mmgp int8 pipeline + Viggle turbo LoRA)
+    qwen_model_dir: Path = Path("./qwen model")
+    qwen_device: str = "cuda"
+    qwen_images_per_prompt: int = 3
+    qwen_num_inference_steps: int = 6
+    qwen_guidance_scale: float = 1.0
+    qwen_seed: int | None = None
+    qwen_quanto_int8_kernel: bool = True
+    qwen_mmgp_profile: int = 5
+    qwen_perc_reserved_mem_max: float = 0.9
+    qwen_vram_safety_coefficient: float = 0.1
+    qwen_attention_backend: str = "auto"
 
     # Image output — governs generation size and download filtering
     aspect_ratio: str = "9:16"
@@ -83,6 +100,7 @@ class Settings(BaseSettings):
         "whisper_language",
         "negative_prompt",
         "zimage_seed",
+        "qwen_seed",
         mode="before",
     )
     @classmethod

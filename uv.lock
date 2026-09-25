@@ -178,7 +178,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "huggingface-hub", specifier = ">=0.24" },
     { name = "litellm", specifier = ">=1.40" },
-    { name = "mmgp", specifier = "==3.7.10" },
+    { name = "mmgp", specifier = "==3.8.1" },
     { name = "nvidia-cublas-cu12", marker = "sys_platform == 'win32'" },
     { name = "nvidia-cudnn-cu12", marker = "sys_platform == 'win32'" },
     { name = "optimum-quanto", specifier = ">=0.2.4" },
@@ -776,7 +776,7 @@ wheels = [
 
 [[package]]
 name = "mmgp"
-version = "3.7.10"
+version = "3.8.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "accelerate" },
@@ -785,9 +785,9 @@ dependencies = [
     { name = "safetensors" },
     { name = "torch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/36/aa/6f58cbc8bb3ca9f5c6faef77fc85409d833ce81d89a503d04e3b648a8a94/mmgp-3.7.10.tar.gz", hash = "sha256:2083d4df49b10cc0332067ea6f89a859b9fab88339f011769a896a54f15ab817", size = 71745, upload-time = "2026-07-19T21:01:43.749Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/cf/76ae279d2a878aad2bbd0819e212a27d71b3ef1ab1e31352d0bac9cb69a0/mmgp-3.8.1.tar.gz", hash = "sha256:5e5cfc5439b3a6a23e797ea3efbd758cd5df97eec974efffb24fc14a31fdcc07", size = 73675, upload-time = "2026-09-20T21:41:48.526Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/62/8eb53f2abf06a3fb0a92e3c59daf733cb66f382e29057c66ecbf9442ec8e/mmgp-3.7.10-py3-none-any.whl", hash = "sha256:0785369772e9fca1d41f15621956317d0b364723fd70516f4a7171853f3ee0c9", size = 67538, upload-time = "2026-07-19T21:01:41.875Z" },
+    { url = "https://files.pythonhosted.org/packages/27/a9/5eda57925292dc9fe5a06be90f2ab8c48772eb05198e5110ed74c67f311a/mmgp-3.8.1-py3-none-any.whl", hash = "sha256:389e05b8146c100ed4723b28dbb12157477a76d38856f1b1795c1c2e03a5a950", size = 69386, upload-time = "2026-09-20T21:41:46.53Z" },
 ]
 
 [[package]]
