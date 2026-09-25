@@ -15,7 +15,7 @@ from typing import NamedTuple
 
 import torch
 from accelerate import init_empty_weights
-from mmgp import offload
+from mmgp import offload, quant_router
 
 from broll_agent.config import Settings
 from broll_agent.qwen21.pipeline import Qwen21Pipeline
@@ -163,6 +163,7 @@ def _setup_vram_management(pipeline: Qwen21Pipeline, cfg: Settings) -> None:
         perc_reserved_mem_max=cfg.qwen_perc_reserved_mem_max,
         vram_safety_coefficient=cfg.qwen_vram_safety_coefficient,
         loras=["transformer"],
+        quantizeTransformer=False,
     )
 
 
@@ -186,9 +187,16 @@ def _setup_lora(pipeline: Qwen21Pipeline, model_dir: Path) -> None:
     logger.info("loaded Viggle turbo LoRA %s", lora_path.name)
 
 
+def _register_quant_handlers() -> None:
+    """Teach mmgp's quant router to read comfy_quant_v1 int8 checkpoints."""
+    quant_router.unregister_handler(".fp8_quanto_bridge")
+    quant_router.register_handler("broll_agent.qwen21.int8_convrot")
+
+
 def load_qwen21_pipeline(cfg: Settings) -> Qwen21Pipeline:
     model_dir = Path(cfg.qwen_model_dir)
     ensure_model_files(model_dir)
+    _register_quant_handlers()
 
     logger.info("loading Qwen-Image 2.1 turbo via mmgp (model_dir=%s)", model_dir)
 
@@ -204,13 +212,13 @@ def load_qwen21_pipeline(cfg: Settings) -> Qwen21Pipeline:
     with torch.device("cpu"), init_empty_weights():
         text_encoder = Qwen3VLTextEncoder(encoder_config)
     text_encoder._config = encoder_config
+    text_encoder.eval().requires_grad_(False)
     offload.load_model_data(
         text_encoder,
         str(model_dir / _ENCODER_WEIGHTS),
         writable_tensors=False,
         preprocess_sd=encoder_state_dict,
     )
-    text_encoder.eval().requires_grad_(False)
 
     vae = offload.fast_load_transformers_model(
         str(model_dir / _VAE_WEIGHTS),

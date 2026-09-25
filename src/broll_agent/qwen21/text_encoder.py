@@ -45,7 +45,10 @@ class Qwen3VLTextEncoder(nn.Module, Qwen3VLModel):
         if "rope_parameters" not in text:
             text["rope_parameters"] = {**text["rope_scaling"], "rope_theta": text["rope_theta"]}
         text_config = SimpleNamespace(**text)
-        self.config = SimpleNamespace(**{**config, "text_config": text_config})
+        vision_config = SimpleNamespace(**dict(config["vision_config"]))
+        self.config = SimpleNamespace(
+            **{**config, "text_config": text_config, "vision_config": vision_config}
+        )
         self.model = nn.Module()
         self.model.language_model = TextModel(text_config)
 
