@@ -20,11 +20,13 @@ from broll_agent.download_searxng import (
     USER_AGENT,
     download_for_opportunity,
 )
-from broll_agent.generate_lightning import (
-    GENERATED_PREFIX,
+from broll_agent.generation import (
     generate_images_for_opportunity,
+    generated_prefix,
+    images_per_prompt,
     load_pipeline,
     load_variations,
+    migrate_legacy_generated,
 )
 from broll_agent.llm_client import LLMClient
 from broll_agent.logging_setup import setup_logging
@@ -142,13 +144,14 @@ def _execute_plan(
     for opportunity in plan.broll_opportunities:
         scene_dir = cfg.output_dir / plan.video_slug / "scenes" / scene_folder_name(opportunity)
         scene_dir.mkdir(parents=True, exist_ok=True)
+        migrate_legacy_generated(scene_dir)
         prompt_path = scene_dir / "prompt.json"
         if force or not prompt_path.exists():
             prompt_path.write_text(opportunity.model_dump_json(indent=2), encoding="utf-8")
 
         if cfg.generate_broll and pipe is not None:
             if _scene_missing(
-                scene_dir, GENERATED_PREFIX,                 cfg.zimage_images_per_prompt, force
+                scene_dir, generated_prefix(cfg.image_engine), images_per_prompt(cfg), force
             ):
                 try:
                     paths = generate_images_for_opportunity(
@@ -191,11 +194,16 @@ def _run_execute(cfg: Settings, video: Path | None, force: bool) -> None:
 
     pipe = None
     if cfg.generate_broll:
+        prefix = generated_prefix(cfg.image_engine)
+        expected = images_per_prompt(cfg)
+        for plan in plans:
+            for index in range(len(plan.broll_opportunities)):
+                migrate_legacy_generated(_scene_dir(cfg, plan, index))
         needs_generate = any(
             _scene_missing(
                 _scene_dir(cfg, plan, index),
-                GENERATED_PREFIX,
-                cfg.zimage_images_per_prompt,
+                prefix,
+                expected,
                 force,
             )
             for plan in plans

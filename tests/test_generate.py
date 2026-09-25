@@ -8,11 +8,14 @@ import pytest
 from PIL import Image as PILImage
 
 from broll_agent.config import Settings
-from broll_agent.generate_lightning import (
-    GENERATED_PREFIX,
+from broll_agent.engines import get_engine
+from broll_agent.generation import (
     build_prompt,
     generate_images_for_opportunity,
+    generated_prefix,
+    images_per_prompt,
     load_variations,
+    migrate_legacy_generated,
 )
 from broll_agent.models import BrollOpportunity
 from broll_agent.video_utils import count_files_with_prefix
@@ -64,9 +67,9 @@ def test_generate_numbers_files_and_saves_pngs(tmp_path: Path) -> None:
     cfg = _generate_settings()
     pipe = FakePipeline()
     paths = generate_images_for_opportunity(pipe, _opportunity(), cfg, tmp_path, VARIANTS)
-    assert [p.name for p in paths] == ["generated_01.png", "generated_02.png"]
+    assert [p.name for p in paths] == ["generated_zimage_01.png", "generated_zimage_02.png"]
     assert all(path.exists() for path in paths)
-    assert count_files_with_prefix(tmp_path, GENERATED_PREFIX) == 2
+    assert count_files_with_prefix(tmp_path, generated_prefix("zimage")) == 2
 
 
 def test_generate_appends_variation_and_style(tmp_path: Path) -> None:
@@ -111,7 +114,7 @@ def test_generate_uses_configured_seed(tmp_path: Path) -> None:
 
 
 def test_count_files_with_prefix_missing_dir(tmp_path: Path) -> None:
-    assert count_files_with_prefix(tmp_path / "nope", GENERATED_PREFIX) == 0
+    assert count_files_with_prefix(tmp_path / "nope", generated_prefix("zimage")) == 0
 
 
 def test_load_variations_reads_json_file(tmp_path: Path) -> None:
@@ -130,3 +133,45 @@ def test_load_variations_rejects_empty(tmp_path: Path) -> None:
 def test_load_variations_rejects_missing(tmp_path: Path) -> None:
     with pytest.raises(OSError):
         load_variations(tmp_path / "nope.json")
+
+
+def test_migrate_legacy_generated_renames_untagged_files(tmp_path: Path) -> None:
+    (tmp_path / "generated_01.png").write_bytes(b"x")
+    (tmp_path / "generated_02.png").write_bytes(b"x")
+    migrate_legacy_generated(tmp_path)
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "generated_zimage_01.png",
+        "generated_zimage_02.png",
+    ]
+
+
+def test_migrate_legacy_generated_skips_existing_target(tmp_path: Path) -> None:
+    (tmp_path / "generated_01.png").write_bytes(b"legacy")
+    (tmp_path / "generated_zimage_01.png").write_bytes(b"tagged")
+    migrate_legacy_generated(tmp_path)
+    assert (tmp_path / "generated_01.png").read_bytes() == b"legacy"
+    assert (tmp_path / "generated_zimage_01.png").read_bytes() == b"tagged"
+
+
+def test_migrate_legacy_generated_ignores_tagged_files(tmp_path: Path) -> None:
+    (tmp_path / "generated_qwen_image21_01.png").write_bytes(b"x")
+    migrate_legacy_generated(tmp_path)
+    assert (tmp_path / "generated_qwen_image21_01.png").read_bytes() == b"x"
+
+
+def test_migrate_legacy_generated_missing_dir(tmp_path: Path) -> None:
+    migrate_legacy_generated(tmp_path / "nope")
+
+
+def test_get_engine_zimage() -> None:
+    assert get_engine("zimage").name == "zimage"
+
+
+def test_get_engine_unknown_raises() -> None:
+    with pytest.raises(ValueError, match="unknown image engine"):
+        get_engine("nope")
+
+
+def test_images_per_prompt_dispatch_zimage() -> None:
+    cfg = _generate_settings()
+    assert images_per_prompt(cfg) == 2
