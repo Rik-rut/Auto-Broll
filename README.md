@@ -18,7 +18,7 @@ You need:
   (or a local [Ollama](https://ollama.com) install)
 - **NVIDIA GPU** recommended for local image generation (6GB+ VRAM minimum, 8GB+ recommended)
   - Works on CPU but much slower
-  - Model files (~10 GB) auto-download on first run
+  - Model files auto-download on first run (~10 GB for Z-Image, ~18 GB for Qwen-Image 2.1)
 
 ## One-time setup
 
@@ -29,6 +29,30 @@ You need:
    - `LLM_API_KEY` with your LLM provider key
    - If using Ollama, set `LLM_PROVIDER=ollama` and `LLM_BASE_URL=http://127.0.0.1:8080`
 5. Everything else has sensible defaults, leave them for now.
+
+## Choose your image engine
+
+Two local image models are built in, and you pick one at a time with
+`IMAGE_ENGINE` in `.env`:
+
+- **`zimage`** (default) — Z-Image Turbo. Fast and light: ~10 GB of model files,
+  about 1 minute per image on a 6 GB GPU. Good default.
+- **`qwen_image21`** — Qwen-Image 2.1 with the Viggle turbo LoRA. Noticeably
+  better at photorealistic people, products and scenes, but bigger and slower:
+  ~18 GB of model files and roughly 3 minutes per image on a 6 GB GPU.
+
+Both engines write into the same scene folders using tagged filenames
+(`generated_zimage_01.png` vs `generated_qwen_image21_01.png`), so you can run
+one engine, look at the results, switch `IMAGE_ENGINE`, run again, and compare
+side by side without losing anything. Images you generated before this feature
+existed are renamed automatically on the next run.
+
+To try Qwen-Image 2.1: set `IMAGE_ENGINE=qwen_image21` in `.env` and run again.
+To go back, set `IMAGE_ENGINE=zimage`.
+
+**License note:** the Qwen-Image 2.1 model is released under the Qwen Research
+License and is **for non-commercial use only**. Check the license before using
+Qwen-generated images in paid work; Z-Image Turbo is Apache 2.0.
 
 ## Model files (for local generation)
 
@@ -45,6 +69,10 @@ The system will automatically download these files (~10 GB total) from HuggingFa
 
 These files use the mmgp int8 format (not the standard HuggingFace format).
 Total disk usage is ~10 GB (vs ~30 GB for the standard format).
+
+If you choose `IMAGE_ENGINE=qwen_image21`, its files (~18 GB) auto-download to
+`qwen model/` on the first Qwen run instead. You only pay for the engine you
+actually use.
 
 **First run will take time** due to downloading. Subsequent runs are fast.
 
@@ -64,7 +92,8 @@ wrapper with `segments` + `duration_seconds`, or a full `transcript.json` as
 written by this tool.
 
 It transcribes your video, finds broll moments, and generates images. Expect a
-few minutes for transcription plus about 1 minute per generated image.
+few minutes for transcription plus roughly 1 minute per generated image with
+Z-Image or 3 minutes with Qwen-Image 2.1 on a 6 GB GPU.
 
 To process one video only: `uv run broll-agent run --video input/my_video.mp4`
 
@@ -87,8 +116,10 @@ Everything is in `output/<your-video-name>/`:
 
 All in `.env`:
 
-- **How many images per moment:** `ZIMAGE_IMAGES_PER_PROMPT` (generated) and
-  `DOWNLOAD_IMAGES_PER_BROLL` (downloaded)
+- **Which model generates images:** `IMAGE_ENGINE` — `zimage` (default, fast)
+  or `qwen_image21` (better quality, slower, non-commercial license).
+- **How many images per moment:** `ZIMAGE_IMAGES_PER_PROMPT` for Z-Image,
+  `QWEN_IMAGES_PER_PROMPT` for Qwen; `DOWNLOAD_IMAGES_PER_BROLL` for downloads.
 - **Turn generation on or off:** `GENERATE_BROLL=true/false` and
   `DOWNLOAD_BROLL=true/false`. Both can be on at once.
 - **Image size:** `IMAGE_WIDTH` and `IMAGE_HEIGHT`. For vertical video use
@@ -108,8 +139,12 @@ All in `.env`:
 ## If something goes wrong
 
 - **"ffmpeg not found"** Install ffmpeg and make sure it is on your PATH.
-- **Model download fails** Check your internet connection. The first run downloads ~10 GB.
-  You can also manually download from HuggingFace: `DeepBeepMeep/Z-Image`
+- **Model download fails** Check your internet connection. The first run downloads
+  ~10 GB for Z-Image (from `DeepBeepMeep/Z-Image`) or ~18 GB for Qwen-Image 2.1
+  (from `DeepBeepMeep/Qwen_image_2` and `DeepBeepMeep/Ideogram4`).
+- **Qwen-Image 2.1 generation is slow** About 3 minutes per image on a 6 GB GPU
+  is expected. For speed, set `IMAGE_ENGINE=zimage`; for lower memory, keep
+  `QWEN_MMGP_PROFILE=5`.
 - **Generation is very slow or crashes with memory errors** Try a different VRAM profile:
   - `ZIMAGE_MMGP_PROFILE=5` (default, most compatible)
   - `ZIMAGE_MMGP_PROFILE=1` (fastest, needs 12GB+ VRAM)
