@@ -175,3 +175,68 @@ def test_get_engine_unknown_raises() -> None:
 def test_images_per_prompt_dispatch_zimage() -> None:
     cfg = _generate_settings()
     assert images_per_prompt(cfg) == 2
+
+
+class FakeQwenPipe:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def generate(self, **kwargs):
+        self.calls.append(kwargs)
+        return PILImage.new("RGB", (kwargs["width"], kwargs["height"]), color=(1, 2, 3))
+
+
+def test_qwen_engine_dispatch_and_prefix() -> None:
+    engine = get_engine("qwen_image21")
+    assert engine.name == "qwen_image21"
+    assert generated_prefix(engine.name) == "generated_qwen_image21_"
+
+
+def test_qwen_engine_uses_qwen_seed() -> None:
+    cfg = Settings(
+        _env_file=None,
+        image_engine="qwen_image21",
+        qwen_seed=99,
+        image_width=64,
+        image_height=96,
+    )
+    assert get_engine("qwen_image21").configured_seed(cfg) == 99
+
+
+def test_qwen_engine_rounds_dimensions_and_passes_settings() -> None:
+    cfg = Settings(
+        _env_file=None,
+        image_engine="qwen_image21",
+        image_width=720,
+        image_height=1280,
+    )
+    pipe = FakeQwenPipe()
+    image = get_engine("qwen_image21").generate_one(pipe, "prompt", cfg, seed=7)
+    assert image.size == (704, 1280)
+    assert pipe.calls[0] == {
+        "prompt": "prompt",
+        "seed": 7,
+        "width": 704,
+        "height": 1280,
+        "num_inference_steps": 6,
+        "guidance_scale": 1.0,
+        "device": "cuda",
+    }
+
+
+def test_qwen_generate_numbers_tagged_files(tmp_path: Path) -> None:
+    cfg = Settings(
+        _env_file=None,
+        image_engine="qwen_image21",
+        qwen_images_per_prompt=2,
+        image_width=64,
+        image_height=96,
+        style_prompt="cinematic photo",
+    )
+    pipe = FakeQwenPipe()
+    paths = generate_images_for_opportunity(pipe, _opportunity(), cfg, tmp_path, VARIANTS)
+    assert [path.name for path in paths] == [
+        "generated_qwen_image21_01.png",
+        "generated_qwen_image21_02.png",
+    ]
+    assert images_per_prompt(cfg) == 2

@@ -24,7 +24,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Type-check annotations
-        run: uv run ruff check --select ANN src/broll_agent/cli.py src/broll_agent/config.py src/broll_agent/models.py src/broll_agent/analyze.py src/broll_agent/planner.py src/broll_agent/transcribe.py src/broll_agent/llm_client.py src/broll_agent/generation.py src/broll_agent/engines/__init__.py src/broll_agent/engines/zimage.py src/broll_agent/download_searxng.py src/broll_agent/video_utils.py
+        run: uv run ruff check --select ANN src/broll_agent/cli.py src/broll_agent/config.py src/broll_agent/models.py src/broll_agent/analyze.py src/broll_agent/planner.py src/broll_agent/transcribe.py src/broll_agent/llm_client.py src/broll_agent/generation.py src/broll_agent/engines/__init__.py src/broll_agent/engines/zimage.py src/broll_agent/engines/qwen21.py src/broll_agent/download_searxng.py src/broll_agent/video_utils.py
 
       - name: Run tests
         run: uv run pytest
