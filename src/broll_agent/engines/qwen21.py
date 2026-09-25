@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from broll_agent.qwen21.pipeline import round_to_alignment
+from broll_agent.shared.alignment import round_to_alignment
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -16,6 +16,7 @@ class QwenImage21Engine:
     """Wraps the qwen21 pipeline behind the ImageEngine protocol."""
 
     name = "qwen_image21"
+    alignment = 32
 
     def load(self, cfg: Settings) -> object:
         from broll_agent.qwen21.model_loader import load_qwen21_pipeline
@@ -32,8 +33,8 @@ class QwenImage21Engine:
         return pipe.generate(
             prompt=prompt,
             seed=seed,
-            width=round_to_alignment(cfg.image_width),
-            height=round_to_alignment(cfg.image_height),
+            width=round_to_alignment(cfg.image_width, self.alignment),
+            height=round_to_alignment(cfg.image_height, self.alignment),
             num_inference_steps=cfg.qwen_num_inference_steps,
             guidance_scale=cfg.qwen_guidance_scale,
             device=cfg.qwen_device,

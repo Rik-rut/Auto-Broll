@@ -123,7 +123,9 @@ All in `.env`:
 - **Turn generation on or off:** `GENERATE_BROLL=true/false` and
   `DOWNLOAD_BROLL=true/false`. Both can be on at once.
 - **Image size:** `IMAGE_WIDTH` and `IMAGE_HEIGHT`. For vertical video use
-  720x1280. For horizontal use 1920x1080.
+  720x1280. For horizontal use 1920x1080. Each engine automatically rounds the
+  size down to what its model needs (multiples of 16 for Z-Image, 32 for Qwen),
+  so 1080x1920 becomes 1072x1920 or 1056x1920 depending on the engine.
 - **The visual style:** `STYLE_PROMPT` is added to every generated image.
   Change it to match your channel's look.
 - **How each b-roll image is shot:** `VARIATIONS_FILE` points at

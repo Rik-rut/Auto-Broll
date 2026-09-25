@@ -163,6 +163,21 @@ def test_migrate_legacy_generated_missing_dir(tmp_path: Path) -> None:
     migrate_legacy_generated(tmp_path / "nope")
 
 
+def test_zimage_engine_rounds_dimensions(tmp_path: Path) -> None:
+    cfg = Settings(_env_file=None, zimage_device="cpu", image_width=1080, image_height=1919)
+    pipe = FakePipeline()
+    image = get_engine("zimage").generate_one(pipe, "prompt", cfg, seed=1)
+    assert image.size == (1072, 1904)
+    assert (pipe.calls[0]["width"], pipe.calls[0]["height"]) == (1072, 1904)
+
+
+def test_zimage_engine_keeps_aligned_dimensions() -> None:
+    cfg = Settings(_env_file=None, zimage_device="cpu", image_width=720, image_height=1280)
+    pipe = FakePipeline()
+    get_engine("zimage").generate_one(pipe, "prompt", cfg, seed=1)
+    assert (pipe.calls[0]["width"], pipe.calls[0]["height"]) == (720, 1280)
+
+
 def test_get_engine_zimage() -> None:
     assert get_engine("zimage").name == "zimage"
 

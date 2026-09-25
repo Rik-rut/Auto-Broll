@@ -32,14 +32,6 @@ VIGGLE_SIGMAS: dict[int, tuple[float, ...]] = {
 }
 
 
-def round_to_alignment(value: int, alignment: int = ALIGNMENT) -> int:
-    """Round a requested dimension down to the model's required alignment."""
-    rounded = int(value) // alignment * alignment
-    if rounded < alignment:
-        raise ValueError(f"{value} is smaller than the {alignment}px minimum")
-    return rounded
-
-
 def build_viggle_scheduler(
     scheduler_config: dict,
     num_inference_steps: int,

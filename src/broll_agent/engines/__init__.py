@@ -14,6 +14,7 @@ class ImageEngine(Protocol):
     """Adapter that loads one local image model and renders single images."""
 
     name: str
+    alignment: int
 
     def load(self, cfg: Settings) -> object: ...
 

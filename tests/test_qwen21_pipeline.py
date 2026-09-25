@@ -10,8 +10,8 @@ from broll_agent.qwen21.pipeline import (
     VIGGLE_SIGMAS,
     Qwen21Pipeline,
     build_viggle_scheduler,
-    round_to_alignment,
 )
+from broll_agent.shared.alignment import round_to_alignment
 
 SCHEDULER_CONFIG = {
     "base_image_seq_len": 256,
@@ -44,11 +44,12 @@ def test_build_viggle_scheduler_rejects_unknown_steps() -> None:
 
 
 def test_round_to_alignment() -> None:
-    assert round_to_alignment(720) == 704
-    assert round_to_alignment(1280) == 1280
-    assert round_to_alignment(32) == 32
+    assert round_to_alignment(720, 32) == 704
+    assert round_to_alignment(1280, 32) == 1280
+    assert round_to_alignment(32, 32) == 32
+    assert round_to_alignment(1080, 16) == 1072
     with pytest.raises(ValueError):
-        round_to_alignment(16)
+        round_to_alignment(16, 32)
 
 
 def test_generate_rejects_guidance_and_steps() -> None:
