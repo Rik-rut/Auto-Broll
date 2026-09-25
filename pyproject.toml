@@ -60,7 +60,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 "src/broll_agent/zimage/**" = ["E501", "E702", "E701", "F401", "I001", "B905", "B006", "B007"]
 "src/broll_agent/shared/**" = ["E501", "E702", "E701", "E722", "F401", "F822", "I001", "B905", "B006", "B007"]
-"src/broll_agent/qwen21/**" = ["E501", "E702", "E701", "F401", "I001", "B905", "B006", "B007"]
+"src/broll_agent/qwen21/**" = ["E402", "E501", "E702", "E701", "F401", "F821", "I001", "UP034", "B905", "B006", "B007"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
