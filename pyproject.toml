@@ -22,6 +22,7 @@ dependencies = [
     "mmgp==3.8.1",
     "optimum-quanto>=0.2.4",
     "huggingface-hub>=0.24",
+    "triton-windows>=3.8.0.post28 ; sys_platform == 'win32'",
 ]
 
 [project.scripts]

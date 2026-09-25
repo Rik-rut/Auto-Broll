@@ -151,8 +151,10 @@ All in `.env`:
   - `ZIMAGE_MMGP_PROFILE=5` (default, most compatible)
   - `ZIMAGE_MMGP_PROFILE=1` (fastest, needs 12GB+ VRAM)
   - Or set `ZIMAGE_DEVICE=cpu` to run without a GPU (much slower but works)
-- **Triton kernels not working** This is normal on Windows. The system falls back to
-  standard quantization. For Triton support, use Linux with a compatible GPU.
+- **Triton kernels not working** The log should say "Triton int8 kernels enabled
+  successfully". If it says "not available", run `uv sync` (Triton ships with the
+  project on Windows via `triton-windows` and on Linux via torch), and make sure
+  your GPU has tensor cores (NVIDIA compute capability 8.0+).
 - **Download errors** Check your SearXNG address in `SEARXNG_BASE_URL` or set
   `DOWNLOAD_BROLL=false`.
 - **LLM errors about keys** Check `LLM_API_KEY` in `.env`.
