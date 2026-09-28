@@ -39,4 +39,4 @@ input/*
 # Tool caches
 .pytest_cache/
 .ruff_cache/
-test
+tests/
