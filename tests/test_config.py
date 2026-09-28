@@ -57,8 +57,19 @@ def test_qwen_defaults() -> None:
     assert cfg.qwen_quanto_int8_kernel is True
     assert cfg.qwen_mmgp_profile == 5
     assert cfg.qwen_attention_backend == "auto"
+    assert cfg.qwen_style_prompt is None
 
 
 def test_blank_qwen_seed_parses_as_none() -> None:
     settings = Settings(_env_file=None, qwen_seed="")
     assert settings.qwen_seed is None
+
+
+def test_blank_qwen_style_prompt_parses_as_none() -> None:
+    settings = Settings(_env_file=None, qwen_style_prompt="")
+    assert settings.qwen_style_prompt is None
+
+
+def test_qwen_style_prompt_parses_as_string() -> None:
+    settings = Settings(_env_file=None, qwen_style_prompt="grainy 35mm film")
+    assert settings.qwen_style_prompt == "grainy 35mm film"

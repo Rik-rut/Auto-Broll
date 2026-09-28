@@ -31,12 +31,20 @@ def load_variations(path: Path) -> list[str]:
 
 
 def build_prompt(opportunity: BrollOpportunity, cfg: Settings, variation: str) -> str:
-    """STYLE_PROMPT is appended at generation time, never baked into the plan."""
-    parts = [opportunity.image_prompt]
+    """Assemble the final generation prompt.
+
+    The style suffix is resolved by the active engine, not read from ``cfg``
+    directly: engines differ in how much prompt augmentation they tolerate
+    (see ``ImageEngine.style_prompt``). It is never baked into the plan.
+    Trailing punctuation is stripped off the base prompt so joining does not
+    produce a stray "., " mid-sentence.
+    """
+    parts = [opportunity.image_prompt.rstrip(" .,")]
     if variation:
         parts.append(variation)
-    if cfg.style_prompt:
-        parts.append(cfg.style_prompt)
+    style = get_engine(cfg.image_engine).style_prompt(cfg)
+    if style:
+        parts.append(style)
     return ", ".join(parts)
 
 

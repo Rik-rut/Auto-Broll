@@ -22,6 +22,14 @@ class ImageEngine(Protocol):
 
     def configured_seed(self, cfg: Settings) -> int | None: ...
 
+    def style_prompt(self, cfg: Settings) -> str:
+        """Style suffix appended to every generation prompt, engine-specific.
+
+        Engines differ in how much prompt augmentation they tolerate, so the
+        suffix is resolved by the active engine rather than read globally.
+        """
+        ...
+
     def generate_one(self, pipe: object, prompt: str, cfg: Settings, seed: int) -> Image.Image: ...
 
 

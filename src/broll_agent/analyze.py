@@ -32,7 +32,10 @@ Rules:
   "context_text": the narration lines this moment covers,
   "reasoning": one sentence on why a cutaway works here,
   "image_prompt": a fully self-contained visual description — subject, setting, action,
-    lighting. No meta text like "an image of", and no style words (style is appended later).
+    and explicit concrete lighting. No meta text like "an image of", no style words
+    ("cinematic", "photorealistic", "film grain", "8k", "DSLR"), and no lighting
+    adjective that could contradict the rest of the sentence. Nothing is appended to
+    this field, so it must carry all of the detail on its own.
   "searxng_query": 3-6 keywords for an image search engine, not a rehash of the prompt.
 - Don't over-suggest: a handful of well-chosen moments beats one per sentence. Base density
   on the video's length and how visual/concrete each moment is, not a fixed interval.

@@ -104,6 +104,61 @@ def test_build_prompt_without_style() -> None:
     assert result == "a golden retriever puppy chewing a leather shoe, test variation"
 
 
+def test_build_prompt_uses_zimage_style_prompt() -> None:
+    cfg = _generate_settings()
+    cfg.image_engine = "zimage"
+    cfg.style_prompt = "cinematic photo, 35mm film grain"
+    result = build_prompt(_opportunity(), cfg, "")
+    assert result == (
+        "a golden retriever puppy chewing a leather shoe, cinematic photo, 35mm film grain"
+    )
+
+
+def test_build_prompt_omits_style_for_qwen_by_default() -> None:
+    """Viggle turbo is CFG-free: an appended style suffix washes the image out."""
+    cfg = _generate_settings()
+    cfg.image_engine = "qwen_image21"
+    cfg.style_prompt = "cinematic photo, natural lighting, shallow depth of field"
+    result = build_prompt(_opportunity(), cfg, "close-up detail shot")
+    assert result == (
+        "a golden retriever puppy chewing a leather shoe, close-up detail shot"
+    )
+
+
+def test_build_prompt_uses_qwen_style_prompt_when_set() -> None:
+    cfg = _generate_settings()
+    cfg.image_engine = "qwen_image21"
+    cfg.qwen_style_prompt = "editorial photography"
+    result = build_prompt(_opportunity(), cfg, "")
+    assert result == "a golden retriever puppy chewing a leather shoe, editorial photography"
+
+
+def test_zimage_engine_style_prompt_is_global() -> None:
+    cfg = _generate_settings()
+    assert get_engine("zimage").style_prompt(cfg) == "cinematic photo, 35mm film grain"
+
+
+def test_qwen_engine_style_prompt_defaults_to_blank() -> None:
+    cfg = Settings(_env_file=None, image_engine="qwen_image21")
+    assert cfg.qwen_style_prompt is None
+    assert get_engine("qwen_image21").style_prompt(cfg) == ""
+
+
+def test_qwen_engine_style_prompt_round_trips_configured_value() -> None:
+    cfg = Settings(_env_file=None, image_engine="qwen_image21", qwen_style_prompt="grainy film")
+    assert get_engine("qwen_image21").style_prompt(cfg) == "grainy film"
+
+
+def test_build_prompt_strips_trailing_punctuation() -> None:
+    """A period-terminated image_prompt must not yield a stray '., ' join."""
+    cfg = _generate_settings()
+    cfg.image_engine = "qwen_image21"
+    opportunity = _opportunity()
+    opportunity.image_prompt = "a puppy chewing a shoe, grass flying."
+    result = build_prompt(opportunity, cfg, "wide establishing shot")
+    assert result == "a puppy chewing a shoe, grass flying, wide establishing shot"
+
+
 def test_generate_uses_configured_seed(tmp_path: Path) -> None:
     cfg = _generate_settings()
     cfg.zimage_seed = 1234
@@ -254,4 +309,8 @@ def test_qwen_generate_numbers_tagged_files(tmp_path: Path) -> None:
         "generated_qwen_image21_01.png",
         "generated_qwen_image21_02.png",
     ]
+    # The global STYLE_PROMPT must not leak into a Qwen prompt.
+    assert pipe.calls[0]["prompt"] == (
+        f"a golden retriever puppy chewing a leather shoe, {VARIANTS[0]}"
+    )
     assert images_per_prompt(cfg) == 2

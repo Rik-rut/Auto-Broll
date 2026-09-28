@@ -77,6 +77,11 @@ class Settings(BaseSettings):
         "cinematic photo, natural lighting, shallow depth of field, photorealistic, 35mm film grain"
     )
     negative_prompt: str | None = None
+    # Per-engine override of the style suffix. Blank by default: the Viggle
+    # turbo LoRA is distilled without CFG and loses visible detail at 6 steps
+    # when a style suffix is appended. style_prompt above still applies to
+    # Z-Image.
+    qwen_style_prompt: str | None = None
 
     # SearXNG (broll image search + download)
     searxng_base_url: str = "http://127.0.0.1:8080"
@@ -101,6 +106,7 @@ class Settings(BaseSettings):
         "negative_prompt",
         "zimage_seed",
         "qwen_seed",
+        "qwen_style_prompt",
         mode="before",
     )
     @classmethod

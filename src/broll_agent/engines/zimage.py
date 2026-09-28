@@ -32,6 +32,9 @@ class ZImageEngine:
     def configured_seed(self, cfg: Settings) -> int | None:
         return cfg.zimage_seed
 
+    def style_prompt(self, cfg: Settings) -> str:
+        return cfg.style_prompt or ""
+
     def generate_one(self, pipe: object, prompt: str, cfg: Settings, seed: int) -> Image.Image:
         import torch
 

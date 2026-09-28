@@ -126,11 +126,18 @@ All in `.env`:
   720x1280. For horizontal use 1920x1080. Each engine automatically rounds the
   size down to what its model needs (multiples of 16 for Z-Image, 32 for Qwen),
   so 1080x1920 becomes 1072x1920 or 1056x1920 depending on the engine.
-- **The visual style:** `STYLE_PROMPT` is added to every generated image.
-  Change it to match your channel's look.
+- **The visual style:** each image engine has its own style setting, both added
+  to every generated image. `STYLE_PROMPT` applies to Z-Image — change it to
+  match your channel's look. `QWEN_STYLE_PROMPT` is for Qwen-Image 2.1 and is
+  **blank on purpose**: that model is a 6-step "turbo" model that produces
+  noticeably softer, flatter images when you add a style phrase to the
+  description, so it gets the description on its own. If you want to try a
+  style with Qwen, put it in `QWEN_STYLE_PROMPT` and compare the results.
 - **How each b-roll image is shot:** `VARIATIONS_FILE` points at
   `config/image_variations.json` — edit that file to change how each b-roll
-  image is shot (framing + camera + lighting) without touching code.
+  image is framed (wide shot, close-up, overhead, and so on) without touching
+  code. Keep these entries to framing and camera angle only: adding lighting or
+  style words here tends to flatten the image.
 - **VRAM management:** `ZIMAGE_MMGP_PROFILE` controls memory usage (1-5, default 5).
   Lower numbers use more VRAM but are faster. If you run out of memory, keep it at 5.
   If you have lots of VRAM (12GB+), try profile 1-3 for faster generation.

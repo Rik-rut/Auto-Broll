@@ -29,6 +29,13 @@ class QwenImage21Engine:
     def configured_seed(self, cfg: Settings) -> int | None:
         return cfg.qwen_seed
 
+    def style_prompt(self, cfg: Settings) -> str:
+        # Blank by default: the Viggle turbo LoRA is distilled without CFG and
+        # degrades visibly when a style suffix is appended (detail-suppressing
+        # tokens like "shallow depth of field" and "film grain" wash the image
+        # out at 6 steps). The bare image_prompt gives the sharpest result.
+        return cfg.qwen_style_prompt or ""
+
     def generate_one(self, pipe: object, prompt: str, cfg: Settings, seed: int) -> Image.Image:
         return pipe.generate(
             prompt=prompt,
